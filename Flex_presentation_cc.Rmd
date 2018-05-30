@@ -1,0 +1,262 @@
+---
+title: "Getting started with flexdashboard"
+author: "Kerry Cella"
+date: "15 May 2018"
+output: ioslides_presentation
+css: style.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse); library(plotly)
+
+cc_data<- read.csv("Childcare_provider_data_Ofsted_Dec2017.csv",
+                   header = TRUE )
+```
+
+## Introduction
+
+This session will cover how to get started building flexdashboard. It builds on the R markdown session in April 2018, available [here](https://educationgovuk.sharepoint.com/sites/sarpi/g/AC/Coffee%20and%20Coding.aspx)
+
+<br>
+
+A flexdashboard is created using R Markdown and allows you to create interactive and visually appealing dashboard easily.
+
+<br>
+
+A complementary getting started guide is [here](https://rmarkdown.rstudio.com/flexdashboard/)
+
+
+## Why use a flexdashboard
+
+- They are relatively simple to build
+
+- They provide a level of interactivity with html widgets
+
+- They look good
+
+- You don't need Shiny! (but you can use it)
+
+## Requirements
+
+To build a flexdashboard you will need to install the following from the software centre:
+
+- R version 3.4.2
+
+- R Studio 1.1.383
+
+You will also need:
+
+- The flexdashboard package
+
+- The knitr package
+
+Both of these packages interact with R Studio
+
+## Get started
+
+First install the flexdashboard package
+```{r cars, eval= FALSE, echo =TRUE}
+install.packages("flexdashboard")
+```
+
+Then in R Studio do the following:
+
+<br>
+
+**File -> New File -> R Markdown... -> From Template -> Flex Dashboard**
+
+## Layout
+
+<font size  = 4>
+
+A layout can be divided into columns or rows. You can decide the orientation in the YAML at the top of your markdown document.
+
+```{r, eval = FALSE, echo=TRUE}
+title: "Row Orientation"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+```
+
+To create a row
+
+```{r eval =FALSE, echo=TRUE}
+Row
+-------------------------------------------------
+```
+
+Alternatively if column oriented:
+
+```{r eval =FALSE, echo=TRUE}
+Column
+-------------------------------------------------
+```
+
+</font>
+
+## Theme
+
+You can also choose the theme within the YAML.
+
+```{r, eval = FALSE, echo=TRUE}
+title: "Row Orientation"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    theme: cerulean
+```
+
+A list of avalable themes is [here](https://rmarkdown.rstudio.com/flexdashboard/using.html#appearance)
+
+## Insert a chart
+
+<font size = 4>
+
+To insert a chart you add a header as follows:
+
+```{r, echo= TRUE}
+### Chart A
+```
+
+You can then insert a chart below that within an R chunk
+
+    ```{r}`r ''`
+    ggplot(data = cc_data) +
+    geom_bar(aes(x = Provider.Type, fill = Provider.Type), stat = "count")+
+    labs(title = "Chidcare market Ofsted 2017")+
+    theme_bw()
+     ```
+
+```{r, warning=FALSE, message= FALSE, fig.height=2, fig.width= 4}
+my_graph<- ggplot(data = cc_data) +
+  geom_bar(aes(x = Provider.Type, fill = Provider.Type), stat = "count")+
+  labs(title = "Chidcare market Ofsted 2017")+
+  theme_bw()+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+my_graph
+
+```
+
+</font>
+
+## Add another page
+
+Adding another page is simple. You delineate as follows:
+
+```{r, echo = TRUE, eval= FALSE}
+
+Front Page
+=============================================
+
+Row
+---------------------------------------------
+### Chart 1
+
+Row
+---------------------------------------------
+
+### Chart 2
+  
+Page 2
+=============================================
+
+```
+
+## Insert a valuebox
+
+<font size  = 4>
+
+You can insert a value box in a similar way to how you insert a chart
+
+    ### My favourite number
+    ```{r}`r ''`
+    valueBox(10, icon = "fa-ceritifcate")
+     ```
+<img src = "favourite.png" width = "200x" height = "50px" />
+
+To customise the appareance and the icon:
+
+      ```{r}`r ''`
+      most_places<- max(cc_data$Registered.places)
+      valueBox(most_places, icon = "fa-bullhorn", color = "green")
+      ```
+
+The icon options are explained [here](https://rmarkdown.rstudio.com/flexdashboard/using.html#value_boxes)
+
+</font>
+
+## Insert a sidebar
+
+<font size  = 4>
+
+You can insert a sidebar with additional information, notifications or links.
+
+```{r, eval= FALSE, echo= TRUE}
+
+Inputs {.sidebar}
+-------------------------------------
+
+**Contact**: kerry.cella@education.gov.uk  
+  
+Row  
+-------------------------------------  
+```
+
+You can also place shiny components inside:
+
+```{r, eval= FALSE, echo= TRUE}
+
+Inputs {.sidebar}
+-------------------------------------
+
+selectInput("la_choice", label = h3("Select LA"),
+            choices = cc_data$Local.Authority, selected = "Barnet")  
+```
+
+</font>
+
+## Further information.
+
+A more in depth guide to using flexdashboard is available from R Studio [here](https://rmarkdown.rstudio.com/flexdashboard/using.html)
+
+<br>
+
+Some examples of flexdashboards in action:
+
+- Live CRAN package [downloads](https://jjallaire.shinyapps.io/shiny-crandash/)
+
+- America's nucelar legacy with [leaflet](https://beta.rstudioconnect.com/jjallaire/htmlwidgets-waste-sites/htmlwidgets-waste-sites.html)
+
+
+## General lesson learned
+
+- Ask for feedback from your users as you build
+
+- Do your data prep seperate from the markdown script.
+
+- Print data separately used in graphs
+
+- You might find it's the simplest features that offer most value
+
+- R markdown / flex - great way to start learning html / css
+
+
+## Who needs Shiny?
+
+<br>
+
+<br>
+
+<center>
+
+<font size = 7>
+
+[**Crosstalk**](https://rstudio.github.io/crosstalk/)
+
+</font>
+
+</center>

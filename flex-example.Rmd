@@ -1,16 +1,15 @@
 ---
-title: "My first Dashboard - Childcare inspections"
+title: "My first dashboard: Childcare inspections"
 output: 
-  flexdashboard::flex_dashboard:
-    orientation: rows
-    horizontal_layout: fill
+    flexdashboard::flex_dashboard:
+      orientation: rows
 ---
 
 Headline Figures
 ========================================================================
 
 ```{r setup, include=FALSE}
-library(flexdashboard); library(tidyverse)
+library(flexdashboard); library(tidyverse); library(plotly); library(dygraphs); library(xts); library(padr)
 
 cc_data<- read.csv("Childcare_provider_data_Ofsted_Dec2017.csv",
                    header = TRUE )
@@ -44,39 +43,56 @@ gauge(rate, min = 0, max = 100, symbol = '%', gaugeSectors(
 ```
 
 
-Column {data-width=350}
+Row {.tabset}
 -----------------------------------------------------------------------
 
-### Childcare market composition
+### Childcare market composition  Dec 2017
 
-```{r}
+```{r, fig.height= 6, fig.width=12}
 
 my_graph<- ggplot(data = cc_data) +
   geom_bar(aes(x = Provider.Type, fill = Provider.Type), stat = "count")+
-  labs(title = "Chidcare market Ofsted 2017")+
   theme_bw()+
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank())
 
-my_graph
+ggplotly(my_graph)
 ```
 
-### Number of places by childminder
+### Number of places by childcare provider
 
 ```{r}
 my_graph2<- ggplot(data = cc_data) +
   geom_histogram(aes(x = Registered.places, fill = Provider.Type))+
-  labs(title = "Frequency of places")+
   facet_wrap(~Provider.Type, scales = "free")+
   guides(fill=FALSE)+
   theme_bw()
 
 my_graph2
+
 ```
 
 
-Deeper look
+### Overall effectivness by Chilcare provider
+```{r}
+
+# filter and pipe into ggplot using dplyr to provide a graphical breakdown
+my_graph3<- cc_data %>% filter(Most.recent.full.EYR.inspection...Overall.effectiveness != "NULL") %>%
+  mutate(Most.recent.full.EYR.inspection...Overall.effectiveness = as.numeric(as.character(Most.recent.full.EYR.inspection...Overall.effectiveness))) %>%
+  ggplot(.) +
+  geom_histogram(aes(x = Most.recent.full.EYR.inspection...Overall.effectiveness, fill = Provider.Type))+
+  facet_wrap(~Provider.Type, scales = "free")+
+  guides(fill=FALSE)+
+  labs(x = "Overall effectiveness rating")+
+  theme_bw()
+
+my_graph3
+
+```
+
+
+Temporal
 =========================================================================
 
 
@@ -85,27 +101,34 @@ Inputs {.sidebar}
 
 I'm a sidebar with some information.
 
-Row {.tabset}
+You can put details such as who you are:
+
+**Built by**: Kerry cella
+
+And where to contact you here:
+
+**Contact**: kerry.cella@education.gov.uk
+
+Row
 -------------------------------------
 
 ### Dates of inspections
 
 ```{r}
-
+# create data frame for inspections by date
 dates_of_inspections <- cc_data %>% count(Most.recent.full.EYR.inspection.date) %>%
-  filter(Most.recent.full.EYR.inspection.date != "NULL",
-         as.Date(as.character(Most.recent.full.EYR.inspection.date)) > "2017-09-01")
+  mutate(Most.recent.full.EYR.inspection.date = as.Date(as.character(Most.recent.full.EYR.inspection.date))) %>%
+  filter(!is.na (Most.recent.full.EYR.inspection.date),
+         Most.recent.full.EYR.inspection.date > "2017-01-01") %>%
+  #pad out missing values using padr
+  pad(.) %>% mutate(n = ifelse(is.na(n), 0, n))
 
-date_graph<- ggplot(data = dates_of_inspections) +
-  geom_line(aes(x = Most.recent.full.EYR.inspection.date, y = n, group = 1), colour = "blue")+
-  labs(title = "Inspection dates September 2017 - December 2017")+
-  theme_bw()+
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust =0.2, size =4))
+#convert to xts as it plays nicely with dygprah
+xts_dos<- xts(x = dates_of_inspections$n, order.by = dates_of_inspections$Most.recent.full.EYR.inspection.date)
 
-date_graph
+#plot our dygraph
+dygraph(xts_dos) %>%
+  dyOptions(includeZero = TRUE) %>% dySeries("V1", label = "Number of inspections")
+
 ```
 
-
-### Chart 2
-
-To be inserted
